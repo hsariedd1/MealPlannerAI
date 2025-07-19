@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 client = OpenAI(
     api_key=os.getenv("OPENAI_API_KEY"),
+    organization="personal",
     project="proj_GtvTRNh4PBFyjS4vQLDeGIQW" 
 )
 app = FastAPI()
