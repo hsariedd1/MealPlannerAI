@@ -7,8 +7,10 @@ from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
+client = OpenAI(
+    api_key=os.getenv("OPENAI_API_KEY"),
+    project="proj_GtvTRNh4PBFyjS4vQLDeGIQW" 
+)
 app = FastAPI()
 
 class UserProfile(BaseModel):
