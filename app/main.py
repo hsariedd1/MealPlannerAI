@@ -87,4 +87,3 @@ Avoid repeating meals more than twice or using expensive ingredients.
         return {"meal_plan": response.choices[0].message.content}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-print("DEBUG - Render sees OPENAI_API_KEY as:", os.getenv("OPENAI_API_KEY"))
