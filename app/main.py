@@ -35,6 +35,37 @@ class CustomizeRequest(BaseModel):
     customization: str
 
 # -------------------------------
+# Helper: prompt suffix with MACROS instructions
+# -------------------------------
+MACROS_INSTRUCTIONS = """
+IMPORTANT:
+At the very end of your response, add a new section that starts with the exact header `MACROS:` followed by a valid JSON block with these keys:
+- average_calories (integer)
+- average_protein_g (integer)
+- average_carbs_g (integer)
+- average_fats_g (integer)
+- sample_meals_day1 (an array of exactly 4 short strings for Breakfast, Lunch, Dinner, Snack)
+
+Example format:
+
+MACROS:
+{
+  "average_calories": 2100,
+  "average_protein_g": 180,
+  "average_carbs_g": 200,
+  "average_fats_g": 60,
+  "sample_meals_day1": [
+    "Breakfast: Greek yogurt with almonds",
+    "Lunch: Grilled chicken salad",
+    "Dinner: Lean turkey pasta",
+    "Snack: Protein shake with banana"
+  ]
+}
+
+⚠️ Do not put anything after this JSON block. Make sure the JSON is valid and parsable.
+"""
+
+# -------------------------------
 # Endpoints
 # -------------------------------
 
@@ -52,29 +83,14 @@ Weekly Budget: {req.weekly_budget}
 Zipcode: {req.zipcode}
 Fitness Goal: {req.fitness_goal}
 
-Assume local stores like Walmart, Kroger, Aldi, or Target. Avoid exotic or hard-to-find items.
-
-Format your response in **Markdown** with clear headings:
+Include clear Markdown sections:
 - Weekly Meal Plan (Day-by-day)
 - Recipes
 - Grocery List (Grouped)
 - Total Estimated Grocery Cost
 
-At the very end, include a JSON block labeled MACROS with:
-{{
-  "average_calories": <average daily calories>,
-  "average_protein_g": <average daily protein grams>,
-  "average_carbs_g": <average daily carbs grams>,
-  "average_fats_g": <average daily fats grams>,
-  "sample_meals_day1": [
-    "Breakfast: <short name>",
-    "Lunch: <short name>",
-    "Dinner: <short name>",
-    "Snack: <short name>"
-  ]
-}}
-Do not include anything else after the JSON. Make sure the JSON is valid.
-    """
+{MACROS_INSTRUCTIONS}
+"""
 
     try:
         response = client.chat.completions.create(
@@ -105,8 +121,9 @@ Your response must include:
 ✅ A full updated 7-day meal plan
 ✅ A section titled 'GROCERY LIST:' with all updated items
 ✅ A section titled 'MACROS:' with updated JSON
-Return everything as plain text.
-    """
+
+{MACROS_INSTRUCTIONS}
+"""
 
     try:
         response = client.chat.completions.create(
