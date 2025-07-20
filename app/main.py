@@ -1,22 +1,24 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import Optional
-import openai
+from openai import OpenAI
 import os
 from dotenv import load_dotenv
 
-# ✅ Load environment variables locally (no effect on Render if already set)
+# ✅ Load environment variables (useful for local dev)
 load_dotenv()
 
-# ✅ Set your OpenAI API key (Render must have OPENAI_API_KEY set)
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# ✅ Initialize OpenAI client with your project ID
+client = OpenAI(
+    api_key=os.getenv("OPENAI_API_KEY"),
+    project="proj_GtvTRNh4PBFyjS4vQLDeGIQW"
+)
 
 app = FastAPI()
 
 # -------------------------------
 # Request models
 # -------------------------------
-
 class MealPlanRequest(BaseModel):
     age: Optional[int] = None
     gender: Optional[str] = None
@@ -75,7 +77,7 @@ Do not include anything else after the JSON. Make sure the JSON is valid.
     """
 
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
                 {"role": "system", "content": "You are a helpful nutrition assistant."},
@@ -84,9 +86,10 @@ Do not include anything else after the JSON. Make sure the JSON is valid.
             temperature=0.7,
             max_tokens=3000
         )
-        return {"meal_plan": response["choices"][0]["message"]["content"]}
+        return {"meal_plan": response.choices[0].message.content}
     except Exception as e:
         return {"error": str(e)}
+
 
 @app.post("/customize")
 async def customize_plan(req: CustomizeRequest):
@@ -106,7 +109,7 @@ Return everything as plain text.
     """
 
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
                 {"role": "system", "content": "You are a helpful nutrition assistant."},
@@ -115,6 +118,6 @@ Return everything as plain text.
             temperature=0.7,
             max_tokens=3000
         )
-        return {"meal_plan": response["choices"][0]["message"]["content"]}
+        return {"meal_plan": response.choices[0].message.content}
     except Exception as e:
         return {"error": str(e)}
