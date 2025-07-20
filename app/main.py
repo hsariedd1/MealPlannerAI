@@ -7,10 +7,13 @@ from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
+
+# ✅ Using your project-scoped key and project ID
 client = OpenAI(
     api_key=os.getenv("OPENAI_API_KEY"),
-    project="proj_GtvTRNh4PBFyjS4vQLDeGIQW" 
+    project="proj_GtvTRNh4PBFyjS4vQLDeGIQW"
 )
+
 app = FastAPI()
 
 class UserProfile(BaseModel):
@@ -67,24 +70,34 @@ Instructions:
 
 4. Assume local stores like Walmart, Kroger, Aldi, or Target. Avoid exotic or hard-to-find items.
 
-5. Format your response in **Markdown** with clear headings:
-   - Weekly Meal Plan (Day-by-day)
-   - Recipes
-   - Grocery List (Grouped)
-   - Total Estimated Grocery Cost
+5. At the very end of your response, after the grocery list, include a JSON block labeled MACROS with the following format:
 
-Assume user has a basic kitchen (pan, oven, blender, olive oil, salt, pepper, garlic powder).
-Avoid repeating meals more than twice or using expensive ingredients.
+MACROS:
+{{
+  "average_calories": <average daily calories>,
+  "average_protein_g": <average daily protein grams>,
+  "average_carbs_g": <average daily carbs grams>,
+  "average_fats_g": <average daily fats grams>,
+  "sample_meals_day1": [
+    "Breakfast: <short name>",
+    "Lunch: <short name>",
+    "Dinner: <short name>",
+    "Snack: <short name>"
+  ]
+}}
+
+6. Do not include anything else after the JSON. Make sure the JSON is valid.
 """
+
     try:
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a helpful nutrition assistant."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,
-            max_tokens=2500
+            max_tokens=3000
         )
         return {"meal_plan": response.choices[0].message.content}
     except Exception as e:
