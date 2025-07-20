@@ -1,20 +1,22 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import Optional
-from openai import OpenAI
+import openai
 import os
+from dotenv import load_dotenv
+
+# ✅ Load environment variables locally (no effect on Render if already set)
+load_dotenv()
+
+# ✅ Set your OpenAI API key (Render must have OPENAI_API_KEY set)
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = FastAPI()
 
-# ✅ GPT client setup (project‑scoped key)
-client = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY"),
-    project="proj_GtvTRNh4PBFyjS4vQLDeGIQW"
-)
+# -------------------------------
+# Request models
+# -------------------------------
 
-# -------------------------------
-# 📌 Original model & endpoint
-# -------------------------------
 class MealPlanRequest(BaseModel):
     age: Optional[int] = None
     gender: Optional[str] = None
@@ -25,6 +27,14 @@ class MealPlanRequest(BaseModel):
     weekly_budget: Optional[int] = None
     zipcode: Optional[str] = None
     fitness_goal: Optional[str] = None
+
+class CustomizeRequest(BaseModel):
+    original_plan: str
+    customization: str
+
+# -------------------------------
+# Endpoints
+# -------------------------------
 
 @app.post("/meal-plan")
 async def meal_plan(req: MealPlanRequest):
@@ -40,29 +50,43 @@ Weekly Budget: {req.weekly_budget}
 Zipcode: {req.zipcode}
 Fitness Goal: {req.fitness_goal}
 
-Include:
-✅ A section titled 'GROCERY LIST:' with all needed items.
-✅ A section titled 'MACROS:' with JSON containing:
-  average_calories, average_protein_g, average_carbs_g, average_fats_g, and sample_meals_day1.
-Return everything as plain text.
+Assume local stores like Walmart, Kroger, Aldi, or Target. Avoid exotic or hard-to-find items.
+
+Format your response in **Markdown** with clear headings:
+- Weekly Meal Plan (Day-by-day)
+- Recipes
+- Grocery List (Grouped)
+- Total Estimated Grocery Cost
+
+At the very end, include a JSON block labeled MACROS with:
+{{
+  "average_calories": <average daily calories>,
+  "average_protein_g": <average daily protein grams>,
+  "average_carbs_g": <average daily carbs grams>,
+  "average_fats_g": <average daily fats grams>,
+  "sample_meals_day1": [
+    "Breakfast: <short name>",
+    "Lunch: <short name>",
+    "Dinner: <short name>",
+    "Snack: <short name>"
+  ]
+}}
+Do not include anything else after the JSON. Make sure the JSON is valid.
     """
 
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.7
-    )
-
-    plan = response.choices[0].message.content
-    return {"meal_plan": plan}
-
-
-# -------------------------------
-# ✨ New customize endpoint
-# -------------------------------
-class CustomizeRequest(BaseModel):
-    original_plan: str
-    customization: str
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "You are a helpful nutrition assistant."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=3000
+        )
+        return {"meal_plan": response["choices"][0]["message"]["content"]}
+    except Exception as e:
+        return {"error": str(e)}
 
 @app.post("/customize")
 async def customize_plan(req: CustomizeRequest):
@@ -81,11 +105,16 @@ Your response must include:
 Return everything as plain text.
     """
 
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.7
-    )
-
-    new_plan = response.choices[0].message.content
-    return {"meal_plan": new_plan}
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "You are a helpful nutrition assistant."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=3000
+        )
+        return {"meal_plan": response["choices"][0]["message"]["content"]}
+    except Exception as e:
+        return {"error": str(e)}
