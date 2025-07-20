@@ -1,36 +1,31 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from typing import Optional
 from openai import OpenAI
 import os
 
 app = FastAPI()
 
-# ✅ GPT client setup
+# ✅ GPT client setup (project‑scoped key)
 client = OpenAI(
     api_key=os.getenv("OPENAI_API_KEY"),
     project="proj_GtvTRNh4PBFyjS4vQLDeGIQW"
 )
 
-# ✅ Original request model for meal-plan
+# -------------------------------
+# 📌 Original model & endpoint
+# -------------------------------
 class MealPlanRequest(BaseModel):
-    age: int | None = None
-    gender: str | None = None
-    height: str | None = None
-    weight: int | None = None
-    body_fat: float | None = None
-    dietary_preferences: str | None = None
-    weekly_budget: int | None = None
-    zipcode: str | None = None
-    fitness_goal: str | None = None
+    age: Optional[int] = None
+    gender: Optional[str] = None
+    height: Optional[str] = None
+    weight: Optional[int] = None
+    body_fat: Optional[float] = None
+    dietary_preferences: Optional[str] = None
+    weekly_budget: Optional[int] = None
+    zipcode: Optional[str] = None
+    fitness_goal: Optional[str] = None
 
-# ✅ New request model for customization
-class CustomizeRequest(BaseModel):
-    original_plan: str
-    customization: str
-
-# ------------------------------------------------------------
-# ✅ Existing endpoint: generate a new meal plan
-# ------------------------------------------------------------
 @app.post("/meal-plan")
 async def meal_plan(req: MealPlanRequest):
     prompt = f"""
@@ -62,9 +57,13 @@ Return everything as plain text.
     return {"meal_plan": plan}
 
 
-# ------------------------------------------------------------
-# ✅ New endpoint: customize an existing plan
-# ------------------------------------------------------------
+# -------------------------------
+# ✨ New customize endpoint
+# -------------------------------
+class CustomizeRequest(BaseModel):
+    original_plan: str
+    customization: str
+
 @app.post("/customize")
 async def customize_plan(req: CustomizeRequest):
     prompt = f"""
